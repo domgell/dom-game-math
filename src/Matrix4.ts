@@ -12,8 +12,8 @@ export const mat4 = {
 
     // --------------------------------- Constants ---------------------------------
 
-    idt: Object.freeze(gl_mat4.create()) as Readonly<Matrix4>,
-    zero: Object.freeze(new Float32Array(16)) as Readonly<Matrix4>,
+    idt: gl_mat4.create() as Readonly<Matrix4>,
+    zero: new Float32Array(16) as Readonly<Matrix4>,
 
 
     // ---------------------------------- Creation ---------------------------------
@@ -31,11 +31,11 @@ export const mat4 = {
     },
 
     /**
-     * Creates a new readonly (with Object.freeze()) matrix from the given data.
+     * Creates a new readonly matrix from the given data.
      * @param data data to create the matrix from, if not provided creates a new identity matrix
      */
     const(data?: Float32Array | number[]): Readonly<Matrix4> {
-        return Object.freeze(this.new(data));
+        return this.new(data);
     },
 
     /**

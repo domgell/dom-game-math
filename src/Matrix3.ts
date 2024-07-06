@@ -7,8 +7,8 @@ export const mat3 = {
     
     // --------------------------------- Constants ---------------------------------
     
-    zero: Object.freeze(new Float32Array(9)) as Readonly<Matrix3>,
-    idt: Object.freeze(gl_mat3.create()) as Readonly<Matrix3>,
+    zero: new Float32Array(9) as Readonly<Matrix3>,
+    idt: gl_mat3.create() as Readonly<Matrix3>,
 
 
     // ---------------------------------- Creation ---------------------------------
@@ -27,7 +27,7 @@ export const mat3 = {
     },
 
     /**
-     * Creates a new readonly (with Object.freeze()) matrix from the given data.
+     * Creates a new readonly matrix from the given data.
      * @param data data to create the matrix from, if not provided creates a new identity matrix
      */
     const(data?: Float32Array | number[]): Readonly<Matrix3> {
