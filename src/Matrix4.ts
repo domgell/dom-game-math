@@ -5,8 +5,8 @@ import {isNearlyEqual, toRad} from "./common.ts";
 
 export type Matrix4 = gl_mat4
 
-type TransformOrder = "TRS" | "RTS" | "STR" | "SRT" | "RST" | "TSR"
-type Transform = { translation: Vector3, rotation: Quaternion, scale: Vector3, order: TransformOrder }
+export type TransformOrder = "TRS" | "RTS" | "STR" | "SRT" | "RST" | "TSR"
+export type Transform3D = { translation: Vector3, rotation: Quaternion, scale: Vector3, order: TransformOrder }
 
 export const mat4 = {
 
@@ -305,7 +305,7 @@ export const mat4 = {
      * @param transform (Default order is TRS)
      * @param out (If not provided, a new instance is created)
      */
-    compose(transform: Partial<Transform>, out: Matrix4 = gl_mat4.create()): Matrix4 {
+    compose(transform: Partial<Transform3D>, out: Matrix4 = gl_mat4.create()): Matrix4 {
         transform.translation ??= vec3.zero;
         transform.rotation ??= quat.idt;
         transform.scale ??= vec3.one;
@@ -350,7 +350,7 @@ export const mat4 = {
      * @param m
      * @param out
      */
-    decompose(m: Readonly<Matrix4>, out?: Partial<Transform>): Transform {
+    decompose(m: Readonly<Matrix4>, out?: Partial<Transform3D>): Transform3D {
         out ??= {};
 
         out.translation ??= vec3.new();
