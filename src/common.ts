@@ -21,6 +21,30 @@ export function lerp(a: number, b: number, alpha: number) {
 }
 
 /**
+ * Linear interpolation between a and b in radians by alpha
+ * (wraps around 0 and 2*PI)
+ * @param a
+ * @param b
+ * @param alpha
+ */
+export function radianLerp(a: number, b: number, alpha: number) {
+    const a1 = (1 - alpha) * Math.cos(a) + alpha * Math.cos(b);
+    const b1 = (1 - alpha) * Math.sin(a) + alpha * Math.sin(b);
+    return Math.atan2(b1, a1);
+}
+
+/**
+ * Linear interpolation between a and b in degrees by alpha
+ * (wraps around 0 and 360)
+ * @param a
+ * @param b
+ * @param alpha
+ */
+export function degreeLerp(a: number, b: number, alpha: number) {
+    return radianLerp(a * toRad, b * toRad, alpha) * toDeg;
+}
+
+/**
  * Random number between min and max
  * @param min
  * @param max

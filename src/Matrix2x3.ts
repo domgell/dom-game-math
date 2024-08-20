@@ -1,7 +1,8 @@
 import {mat2d as gl_mat2x3} from "gl-matrix";
 import {Vector2, vec2} from "./Vector2";
 import {isNearlyEqual, lerp} from "./common.ts";
-import {TransformOrder} from "./Matrix4.ts";
+import {TransformOrder, mat4, Matrix4} from "./Matrix4.ts";
+import {quat} from "./Quaternion.ts";
 
 export type Matrix2x3 = gl_mat2x3
 
@@ -212,7 +213,7 @@ export const mat2x3 = {
      * @param out (If not provided, a new instance is created)
      */
     setScale(m: Readonly<Matrix2x3>, scale: Readonly<Vector2>, out: Matrix2x3 = gl_mat2x3.create()): Matrix2x3 {
-        this.set(out, m)
+        this.set(out, m);
         const current = this.getScale(m);
         vec2.div(scale, current, scale);
         this.scale(out, scale, out);
@@ -293,7 +294,7 @@ export const mat2x3 = {
      * @param out (If not provided, a new instance is created)
      */
     decompose(m: Readonly<Matrix2x3>, out?: Partial<Transform2D>): Transform2D {
-        out ??= {}
+        out ??= {};
 
         out.translation ??= vec2.new();
         out.rotation ??= 0;
@@ -353,5 +354,21 @@ export const mat2x3 = {
         return vec2.equals(m1.translation, m2.translation, tolerance)
             && isNearlyEqual(m1.rotation, m2.rotation, tolerance)
             && vec2.equals(m1.scale, m2.scale, tolerance);
+    },
+
+    // ------------------------------- Conversion -----------------------------------
+
+    /**
+     * Creates a matrix4 from the given matrix2x3
+     * @param m
+     * @param out (If not provided, a new instance is created)
+     */
+    toMat4(m: Readonly<Matrix2x3>, out: Matrix4 = mat4.new()): Matrix4 {
+        const t = this.decompose(m);
+        return mat4.compose({
+            translation: {...t.translation, z: 0},
+            rotation: quat.fromEuler({roll: t.rotation}),
+            scale: {...t.scale, z: 1},
+        }, out);
     },
 };
