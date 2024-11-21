@@ -72,6 +72,16 @@ export const vec4 = {
         return v;
     },
 
+    /**
+     * Sets the x, y, z, w values of v to zero.
+     */
+    clear(v: Vector4): Vector4 {
+        v.x = 0;
+        v.y = 0;
+        v.z = 0;
+        v.w = 0;
+        return v;
+    },
 
     // ----------------------------------- Array -----------------------------------
 

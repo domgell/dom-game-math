@@ -65,6 +65,14 @@ export const vec2 = {
         return v;
     },
 
+    /**
+     * Set the x, y values of v to zero
+     */
+    clear(v: Vector2): Vector2 {
+        v.x = 0;
+        v.y = 0;
+        return v;
+    },
 
     // ----------------------------------- Array -----------------------------------
 
@@ -238,6 +246,15 @@ export const vec2 = {
         out.x = Math.cos(degrees * toRad);
         out.y = Math.sin(degrees * toRad);
         return out;
+    },
+
+    /**
+     * Angle between vectors a and b in degrees
+     * @param a
+     * @param b
+     */
+    angle(a: Readonly<Vector2>, b: Readonly<Vector2>): number {
+        return Math.acos(this.dot(a, b) / (this.len(a) * this.len(b))) * toRad;
     },
 
     /**

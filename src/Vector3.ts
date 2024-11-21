@@ -10,10 +10,25 @@ export const vec3 = {
 
     // --------------------------------- Constants ---------------------------------
 
+    /**
+     * Zero vector (0, 0, 0)
+     */
     zero: Object.freeze({x: 0, y: 0, z: 0}) as Readonly<Vector3>,
+    /**
+     * One vector (1, 1, 1)
+     */
     one: Object.freeze({x: 1, y: 1, z: 1}) as Readonly<Vector3>,
+    /**
+     * Right vector (1, 0, 0)
+     */
     right: Object.freeze({x: 1, y: 0, z: 0}) as Readonly<Vector3>,
+    /**
+     * Left vector (-1, 0, 0)
+     */
     up: Object.freeze({x: 0, y: 1, z: 0}) as Readonly<Vector3>,
+    /**
+     * Up vector (0, 1, 0)
+     */
     forward: Object.freeze({x: 0, y: 0, z: 1}) as Readonly<Vector3>,
 
 
@@ -70,6 +85,16 @@ export const vec3 = {
         v.x = other.x;
         v.y = other.y;
         v.z = other.z;
+        return v;
+    },
+
+    /**
+     * Set the x, y, z values of v to zero to 0.
+     */
+    clear(v: Vector3): Vector3 {
+        v.x = 0;
+        v.y = 0;
+        v.z = 0;
         return v;
     },
 

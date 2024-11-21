@@ -1,6 +1,6 @@
 import {mat2d as gl_mat2x3} from "gl-matrix";
 import {Vector2, vec2} from "./Vector2";
-import {isNearlyEqual, lerp} from "./common.ts";
+import {isNearlyEqual, lerp, toDeg, toRad} from "./common.ts";
 import {TransformOrder, mat4, Matrix4} from "./Matrix4.ts";
 import {quat} from "./Quaternion.ts";
 
@@ -157,13 +157,13 @@ export const mat2x3 = {
     // ----------------------------------- Rotation -----------------------------------
 
     /**
-     * Rotates m by the given rotation
+     * Rotates m by the given rotation in degrees
      * @param m
      * @param rotation
      * @param out (If not provided, a new instance is created)
      */
     rotate(m: Readonly<Matrix2x3>, rotation: number, out: Matrix2x3 = gl_mat2x3.create()): Matrix2x3 {
-        return gl_mat2x3.rotate(out, m, rotation);
+        return gl_mat2x3.rotate(out, m, rotation * toRad);
     },
 
     /**
@@ -177,20 +177,20 @@ export const mat2x3 = {
     },
 
     /**
-     * Rotation of m (without scale)
+     * Rotation of m in degrees (without scale)
      * @param m
      */
     getRotation(m: Readonly<Matrix2x3>): number {
-        return Math.atan2(m[1], m[0]);
+        return Math.atan2(m[1], m[0]) * toDeg;
     },
 
     /**
-     * Creates a matrix with the given rotation
+     * Creates a matrix with the given rotation in degrees
      * @param rotation
      * @param out (If not provided, a new instance is created)
      */
     fromRotation(rotation: number, out: Matrix2x3 = gl_mat2x3.create()): Matrix2x3 {
-        return gl_mat2x3.fromRotation(out, rotation);
+        return gl_mat2x3.fromRotation(out, rotation * toRad);
     },
 
 
