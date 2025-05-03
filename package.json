@@ -1,15 +1,16 @@
 {
   "name": "dom-game-math",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "",
-  "main": "src/main.ts",
-  "exports": "./src/main.ts",
+  "main": "src/index.ts",
+  "exports": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gl-matrix": "^3.4.3"
+    "gl-matrix": "^3.4.3",
+    "@domgell/ts-util": "*"
   }
 }

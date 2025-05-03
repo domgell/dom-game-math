@@ -1,13 +1,27 @@
-import {vec2 as gl_vec2, vec3 as gl_vec3, vec4 as gl_vec4, mat4 as gl_mat4, mat3 as gl_mat3, quat as gl_quat} from "gl-matrix";
+import {
+    vec2 as gl_vec2,
+    vec3 as gl_vec3,
+    vec4 as gl_vec4,
+    mat4 as gl_mat4,
+    mat3 as gl_mat3,
+    quat as gl_quat,
+} from "gl-matrix";
 import {Matrix4} from "./Matrix4.ts";
 
 export type Matrix3 = gl_mat3
 
 export const mat3 = {
-    
+
     // --------------------------------- Constants ---------------------------------
-    
+
+    /**
+     * Zero matrix
+     */
     zero: new Float32Array(9) as Readonly<Matrix3>,
+
+    /**
+     * Identity matrix
+     */
     idt: gl_mat3.create() as Readonly<Matrix3>,
 
 
@@ -21,8 +35,7 @@ export const mat3 = {
         if (data === undefined) {
             return gl_mat3.create();
         } else {
-            console.assert(data.length === 9);
-            return data as Matrix3;
+            return data.slice(0, 9) as Matrix3;
         }
     },
 
@@ -158,4 +171,4 @@ export const mat3 = {
         out[15] = 1;
         return out;
     },
-}
+};

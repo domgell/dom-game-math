@@ -1,214 +1,335 @@
-import {vec4 as gl_vec4} from "gl-matrix";
+import {Vector3} from "./Vector3.ts";
+import {Vector2} from "./Vector2.ts";
+import {TypedArrayNonBigInt} from "@domgell/ts-util";
 import {isNearlyEqual, lerp} from "./common.ts";
 import {Matrix4} from "./Matrix4.ts";
-import {ConstRefVector, RefVector} from "./RefVector.ts";
+import {vec4 as gl_vec4} from "gl-matrix";
 
 export type Vector4 = { x: number, y: number, z: number, w: number }
 
 export const vec4 = {
 
-    // --------------------------------- Constants ---------------------------------
-
-    zero: Object.freeze({x: 0, y: 0, z: 0, w: 0}) as Readonly<Vector4>,
-    one: Object.freeze({x: 1, y: 1, z: 1, w: 1}) as Readonly<Vector4>,
-    red: Object.freeze({x: 1, y: 0, z: 0, w: 1}) as Readonly<Vector4>,
-    green: Object.freeze({x: 0, y: 1, z: 0, w: 1}) as Readonly<Vector4>,
-    blue: Object.freeze({x: 0, y: 0, z: 1, w: 1}) as Readonly<Vector4>,
-    black: Object.freeze({x: 0, y: 0, z: 0, w: 1}) as Readonly<Vector4>,
-
-
-    // ------------------------------------------------------------------------------
+    // ----------------------------------- Constants -----------------------------------
 
     /**
-     * Create a new Vector4 from x, y, z, w.
-     * - If x, y, z, w are not provided, the vector will be (0, 0, 0, 0)
-     * - If y, z, w are not provided, the vector will be (x, x, x, x)
-     * @param x
-     * @param y
-     * @param z
-     * @param w
+     * Zero vector (0, 0, 0, 0)
      */
-    new(x?: number, y?: number, z?: number, w?: number): Vector4 {
-        if (x !== undefined && y === undefined && z === undefined)
-            return {x: x, y: x, z: x, w: x};
+    zero: Object.freeze({x: 0, y: 0, z: 0, w: 0}),
 
-        if (x === undefined && y === undefined && z === undefined && w === undefined)
+    /**
+     * One vector (1, 1, 1, 1)
+     */
+    one: Object.freeze({x: 1, y: 1, z: 1, w: 1}),
+
+    // --------------------------------- Constructors ----------------------------------
+
+    /**
+     * Create a new vector instance
+     */
+    new: ((...args: any) => {
+        const a = args[0];
+        const b = args[1];
+        const c = args[2];
+        const d = args[3];
+
+        if (typeof a === "number" && typeof b === "number") {
+            return {x: a, y: b, z: c, w: d};
+        }
+
+        if (typeof a === "number") {
+            return {x: a, y: a, z: a, w: a};
+        }
+
+        if (a === undefined) {
             return {x: 0, y: 0, z: 0, w: 0};
+        }
 
-        x ??= 0;
-        y ??= 0;
-        z ??= 0;
-        w ??= 0;
+        if ("x" in a && "y" in a && "z" in a) {
+            return {x: a.x, y: a.y, z: a.z, w: b};
+        }
 
-        return {x, y, z, w};
+        throw new Error("Invalid arguments to create Vector4");
+    }) as {
+        /**
+         * Create a new vector from x, y, z, w components
+         * @param x
+         * @param y
+         * @param z
+         * @param w
+         */
+        (x: number, y: number, z: number, w: number): Vector4,
+        /**
+         * Create a new vector as {x: f, y: f, z: f, w: f}
+         * @param f
+         */
+        (f: number): Vector4,
+        /**
+         * Create a new vector as {x: 0, y: 0, z: 0, w: 0}
+         */
+        (): Vector4,
+        /**
+         * Create a new vector with {x: v.x, y: v.y, z: v.z, w: w}
+         * @param v
+         * @param w
+         */
+        (v: Vector3, w: number): Vector4,
     },
 
     /**
-     * Create a new readonly (with Object.freeze()) Vector4 from x, y, z, w values.
-     * - If x, y, z, w are not provided, the vector will be (0, 0, 0, 0)
-     * - If y, z, w are not provided, the vector will be (x, x, x, x)
-     * @param x
-     * @param y
-     * @param z
-     * @param w
+     * Create a new readonly vector
      */
-    const(x?: number, y?: number, z?: number, w?: number) {
-        return Object.freeze(this.new(x, y, z, w)) as Readonly<Vector4>;
+    const: ((...args: any) => {
+        return vec4.new(args);
+    }) as {
+        /**
+         * Create a new readonly vector from x, y, z, w components
+         * @param x
+         * @param y
+         * @param z
+         * @param w
+         */
+        (x: number, y: number, z: number, w: number): Readonly<Vector4>,
+        /**
+         * Create a new readonly vector as {x: f, y: f, z: f, w: f}
+         * @param f
+         */
+        (f: number): Readonly<Vector4>,
+        /**
+         * Create a new readonly vector as {x: 0, y: 0, z: 0, w: 0}
+         */
+        (): Readonly<Vector4>,
+        /**
+         * Create a new readonly vector with {x: v.x, y: v.y, z: v.z, w: w}
+         * @param v
+         * @param w
+         */
+        (v: Vector3, w: number): Readonly<Vector4>,
+    },
+
+    // ------------------------------- Copy, Set, Clear --------------------------------
+
+    /**
+     * Create a new vector instance with the same components as `other`.
+     * @param other
+     */
+    copy(other: Readonly<Vector4>): Vector4 {
+        return {x: other.x, y: other.y, z: other.z, w: other.w};
     },
 
     /**
-     * Creates a new Vector4 with the same x, y, z, w values as v.
-     * @param v
+     * Set the components of `v` and return `v`
      */
-    copy(v: Readonly<Vector4>): Vector4 {
-        return this.new(v.x, v.y, v.z, v.w);
-    },
+    set: ((v: Vector4, ...args: any) => {
+        const a = args[0];
+        const b = args[1];
+        const c = args[2];
+        const d = args[3];
 
-    set(v: Vector4, other: Readonly<Vector4>): Vector4 {
-        v.x = other.x;
-        v.y = other.y;
-        v.z = other.z;
-        v.w = other.w;
+        if (typeof a === "number") {
+            v.x = a;
+            v.y = b;
+            v.z = c;
+            v.w = d;
+        } else {
+            v.x = a.x;
+            v.y = a.y;
+            v.z = a.z;
+            v.w = a.w;
+        }
+
         return v;
+    }) as {
+        /**
+         * Set the components of `v` and return `v`
+         */
+        (v: Vector4, x: number, y: number, z: number, w: number): Vector4,
+        /**
+         * Set the components of `v` and return `v`
+         */
+        (v: Vector4, other: Readonly<Vector4>): Vector4,
     },
 
     /**
-     * Sets the x, y, z, w values of v to zero.
+     * Set components of `v` to 0 and return `v`.
      */
     clear(v: Vector4): Vector4 {
         v.x = 0;
         v.y = 0;
         v.z = 0;
         v.w = 0;
+
         return v;
     },
 
-    // ----------------------------------- Array -----------------------------------
+    // ------------------------------------- Array -------------------------------------
 
     /**
-     * Create a new Vector4 from the values of an array at an offset.
-     * @param arr
-     * @param offset
+     * Create a new vector from `array` with `{x: array[offset], y: array[offset + 1], z: array[offset + 2], w: array[offset + 3]}`
+     * @param array
+     * @param offset Defaults to 0
      */
-    fromArray(arr: number[] | Float32Array, offset: number = 0): Vector4 {
-        return this.new(arr[offset], arr[offset + 1], arr[offset + 2], arr[offset + 3]);
+    fromArray(array: ArrayLike<number>, offset: number = 0): Vector4 {
+        return {x: array[offset], y: array[offset + 1], z: array[offset + 2], w: array[offset + 3]};
     },
-
     /**
-     * Put the x, y, z, w values of v into an array at an offset.
+     * Put the components of `v` into `array` at an offset
      * @param v
-     * @param out
-     * @param offset
+     * @param array
+     * @param offset Defaults to 0
      */
-    intoArray(v: Readonly<Vector4>, out: number[] | Float32Array, offset: number = 0) {
-        out[offset] = v.x;
-        out[offset + 1] = v.y;
-        out[offset + 2] = v.z;
-        out[offset + 3] = v.w;
+    intoArray(v: Readonly<Vector4>, array: number[] | TypedArrayNonBigInt, offset: number = 0): void {
+        array[offset] = v.x;
+        array[offset + 1] = v.y;
+        array[offset + 2] = v.z;
+        array[offset + 3] = v.w;
     },
-
     /**
-     * Returns a new array with the x, y, z, w values of v
+     * Create a new array from `v` with `[v.x, v.y, v.z, v.w]`
      * @param v
      */
     toArray(v: Readonly<Vector4>): [number, number, number, number] {
         return [v.x, v.y, v.z, v.w];
     },
 
-    /**
-     * Provides getters and setters to access an array at an offset as a vector with x, y, z, w components
-     * @param arr
-     * @param offset
-     */
-    ref(arr: number[] | Float32Array, offset: number = 0): Vector4 {
-        return new RefVector(arr, offset) as Vector4;
-    },
+    // ------------------------------------ Length -------------------------------------
 
     /**
-     * Provides getters to access an array at an offset as a vector with x, y, z, w components
-     * @param arr
-     * @param offset
+     * Returns the length of `v` (`sqrt(dot(v, v)`)
+     * @param v
      */
-    refConst(arr: number[] | Float32Array, offset: number = 0): Readonly<Vector4> {
-        return new ConstRefVector(arr, offset) as Readonly<Vector4>;
-    },
-
-    // ------------------------------------------------------------------------------
-
     len(v: Readonly<Vector4>): number {
         return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
     },
 
+    /**
+     * Returns the squared length of `v` (`dot(v, v)`).
+     * @param v
+     */
     lenSquared(v: Readonly<Vector4>): number {
         return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
     },
 
+    /**
+     * Returns the distance between `a` and `b` (`len(a - b)`)
+     * @param a
+     * @param b
+     */
     distance(a: Readonly<Vector4>, b: Readonly<Vector4>): number {
-        return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2 + (b.w - a.w) ** 2);
-    },
-
-    distanceSquared(a: Readonly<Vector4>, b: Readonly<Vector4>): number {
-        return (b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2 + (b.w - a.w) ** 2;
+        return Math.sqrt(vec4.distanceSquared(a, b));
     },
 
     /**
-     * Normalize the vector v
+     * Returns the squared distance between `a` and `b` (`dot(a - b, a - b)`)
+     * @param a
+     * @param b
+     */
+    distanceSquared(a: Readonly<Vector4>, b: Readonly<Vector4>): number {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dz = a.z - b.z;
+        const dw = a.w - b.w;
+        return dx * dx + dy * dy + dz * dz + dw * dw;
+    },
+
+    /**
+     * Normalize `v` and put the result in `out` and return `out`.
      * @param v
-     * @param out Result of v normalized (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     normalize(v: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
-        const len = this.len(v);
-
-        if (len === 0)
-            return this.set(out, v);
-
-        const invLen = 1.0 / len;
-        out.x = v.x * invLen;
-        out.y = v.y * invLen;
-        out.z = v.z * invLen;
-        out.w = v.w * invLen;
+        const len = vec4.len(v);
+        if (len === 0) {
+            out.x = 0;
+            out.y = 0;
+            out.z = 0;
+            out.w = 0;
+        } else {
+            const invLen = 1 / len;
+            out.x = v.x * invLen;
+            out.y = v.y * invLen;
+            out.z = v.z * invLen;
+            out.w = v.w * invLen;
+        }
 
         return out;
     },
 
-
-    // -------------------------------- Arithmetic --------------------------------
+    // -------------------------------------- Dot --------------------------------------
 
     /**
-     * Add the vectors a and b
-     * @param a First operand
-     * @param b Second operand
-     * @param out Result of a + b (If not provided a new instance is created)
+     * Returns the dot product of `a` and `b`
+     * @param a
+     * @param b
      */
-    add(a: Readonly<Vector4>, b: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
-        out.x = a.x + b.x;
-        out.y = a.y + b.y;
-        out.z = a.z + b.z;
-        out.w = a.w + b.w;
-        return out;
+    dot(a: Readonly<Vector4>, b: Readonly<Vector4>): number {
+        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     },
 
-    /**
-     * Subtract the vector b from a
-     * @param a First operand
-     * @param b Second operand
-     * @param out Result of a - b (If not provided a new instance is created)
-     */
-    sub(a: Readonly<Vector4>, b: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
-        out.x = a.x - b.x;
-        out.y = a.y - b.y;
-        out.z = a.z - b.z;
-        out.w = a.w - b.w;
+    // ---------------------------------- Arithmetic -----------------------------------
+
+    add: ((a: Readonly<Vector4>, b: Readonly<Vector4> | number, out = {x: 0, y: 0, z: 0, w: 0}) => {
+        if (typeof b === "number") {
+            out.x = a.x + b;
+            out.y = a.y + b;
+            out.z = a.z + b;
+            out.w = a.w + b;
+        } else {
+            out.x = a.x + b.x;
+            out.y = a.y + b.y;
+            out.z = a.z + b.z;
+            out.w = a.w + b.w;
+        }
+
         return out;
+    }) as {
+        /**
+         * Add `a` and `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: Readonly<Vector4>, out?: Vector4): Vector4,
+        /**
+         * Add the scalar `b` to each component of `a`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: number, out?: Vector4): Vector4,
     },
 
-    /**
-     * Multiply the vector a by the vector or scalar b
-     * @param a First operand
-     * @param b Second operand (Vector4 or scalar)
-     * @param out Result of a * b (If not provided a new instance is created)
-     */
-    mul(a: Readonly<Vector4>, b: Readonly<Vector4> | number, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
+    sub: ((a: Readonly<Vector4>, b: Readonly<Vector4> | number, out = {x: 0, y: 0, z: 0, w: 0}) => {
+        if (typeof b === "number") {
+            out.x = a.x - b;
+            out.y = a.y - b;
+            out.z = a.z - b;
+            out.w = a.w - b;
+        } else {
+            out.x = a.x - b.x;
+            out.y = a.y - b.y;
+            out.z = a.z - b.z;
+            out.w = a.w - b.w;
+        }
+
+        return out;
+    }) as {
+        /**
+         * Subtract `b` from `a`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: Readonly<Vector4>, out?: Vector4): Vector4,
+        /**
+         * Subtract the scalar `b` from each component of `a`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: number, out?: Vector4): Vector4,
+    },
+
+    mul: ((a: Readonly<Vector4>, b: Readonly<Vector4> | number, out = {x: 0, y: 0, z: 0, w: 0}) => {
         if (typeof b === "number") {
             out.x = a.x * b;
             out.y = a.y * b;
@@ -220,16 +341,26 @@ export const vec4 = {
             out.z = a.z * b.z;
             out.w = a.w * b.w;
         }
+
         return out;
+    }) as {
+        /**
+         * Multiply `a` by `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: Readonly<Vector4>, out?: Vector4): Vector4,
+        /**
+         * Multiply each component of `a` by the scalar `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: number, out?: Vector4): Vector4,
     },
 
-    /**
-     * Divide the vector a by the vector or scalar b
-     * @param a First operand
-     * @param b Second operand (Vector4 or scalar)
-     * @param out Result of a / b (If not provided a new instance is created)
-     */
-    div(a: Readonly<Vector4>, b: Readonly<Vector4> | number, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
+    div: ((a: Readonly<Vector4>, b: Readonly<Vector4> | number, out = {x: 0, y: 0, z: 0, w: 0}) => {
         if (typeof b === "number") {
             out.x = a.x / b;
             out.y = a.y / b;
@@ -241,13 +372,29 @@ export const vec4 = {
             out.z = a.z / b.z;
             out.w = a.w / b.w;
         }
+
         return out;
+    }) as {
+        /**
+         * Divide `a` by `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: Readonly<Vector4>, out?: Vector4): Vector4,
+        /**
+         * Divide each component of `a` by the scalar `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: number, out?: Vector4): Vector4,
     },
 
     /**
-     * Negated vector v (-x, -y, -z, -w)
-     * @param v Vector to negate
-     * @param out Result of -v (If not provided a new instance is created)
+     * Negate the components of `v` and put the result in `out` and return `out`.
+     * @param v
+     * @param out Defaults to a new vector
      */
     negate(v: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
         out.x = -v.x;
@@ -257,21 +404,13 @@ export const vec4 = {
         return out;
     },
 
-
-    // ------------------------------------------------------------------------------
-
-    dot(a: Readonly<Vector4>, b: Readonly<Vector4>): number {
-        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-    },
-
-
-    // ------------------------------------------------------------------------------
+    // --------------------------------- Max, Min, Abs ---------------------------------
 
     /**
-     * Max vector between a and b
+     * Component-wise `Math.max(a, b)`, put the result into `out` and return `out`.
      * @param a
      * @param b
-     * @param out Result of max(a, b) (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     max(a: Readonly<Vector4>, b: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
         out.x = Math.max(a.x, b.x);
@@ -282,10 +421,10 @@ export const vec4 = {
     },
 
     /**
-     * Min vector between a and b
+     * Component-wise `Math.min(a, b)`, put the result into `out` and return `out`.
      * @param a
      * @param b
-     * @param out Result of min(a, b) (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     min(a: Readonly<Vector4>, b: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
         out.x = Math.min(a.x, b.x);
@@ -296,29 +435,9 @@ export const vec4 = {
     },
 
     /**
-     * Clamp vector v components between min and max
+     * Component-wise `Math.abs(v)`, put the result into `out` and return `out`.
      * @param v
-     * @param min
-     * @param max
-     * @param out Result of clamp(v, min, max) (If not provided a new instance is created)
-     */
-    clamp(v: Readonly<Vector4>, min: Readonly<Vector4>, max: Readonly<Vector4>, out: Vector4 = {
-        x: 0,
-        y: 0,
-        z: 0,
-        w: 0,
-    }): Vector4 {
-        out.x = Math.min(Math.max(v.x, min.x), max.x);
-        out.y = Math.min(Math.max(v.y, min.y), max.y);
-        out.z = Math.min(Math.max(v.z, min.z), max.z);
-        out.w = Math.min(Math.max(v.w, min.w), max.w);
-        return out;
-    },
-
-    /**
-     * Absolute value of vector v
-     * @param v
-     * @param out Result of abs(v) (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     abs(v: Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
         out.x = Math.abs(v.x);
@@ -328,57 +447,78 @@ export const vec4 = {
         return out;
     },
 
+    // ------------------------------------- Lerp --------------------------------------
+
+    lerp: ((a: Readonly<Vector4>, b: Readonly<Vector4>, alpha: number | Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}) => {
+        if (typeof alpha === "number") {
+            out.x = lerp(a.x, b.x, alpha);
+            out.y = lerp(a.y, b.y, alpha);
+            out.z = lerp(a.z, b.z, alpha);
+            out.w = lerp(a.w, b.w, alpha);
+        } else {
+            out.x = lerp(a.x, alpha.x, alpha.y);
+            out.y = lerp(a.y, alpha.y, alpha.y);
+            out.z = lerp(a.z, alpha.z, alpha.z);
+            out.w = lerp(a.w, alpha.w, alpha.w);
+        }
+
+        return out;
+    }) as {
+        /**
+         * Linearly interpolates between `a` and `b` based on the components of `alpha`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param alpha
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: Readonly<Vector4>, alpha: number, out?: Vector4): Vector4,
+        /**
+         * Linearly interpolates between `a` and `b` based on `alpha`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param alpha
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector4>, b: number, alpha: number, out?: Vector4): Vector4,
+    },
+
+    // ----------------------------------- Transform -----------------------------------
+
     /**
-     * Component-wise equality between vectors a and b at the given tolerance
+     * Transform `v` by transformation matrix `m`, put the result in `out` and return `out`.
+     * @param v
+     * @param m
+     * @param out Defaults to a new vector
+     */
+    transform(v: Readonly<Vector4>, m: Matrix4, out = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
+        // TEMP
+        const t = gl_vec4.transformMat4(gl_vec4.create(), this.toArray(v), m);
+        out.x = t[0];
+        out.y = t[1];
+        out.z = t[2];
+        out.w = t[3];
+        return out;
+    },
+
+    // ------------------------------------ Equals -------------------------------------
+
+    /**
+     * Component-wise check if `a` and `b` are equal within `tolerance`
      * @param a
      * @param b
-     * @param tolerance
+     * @param tolerance Defaults to 0.0001
      */
-    equals(a: Readonly<Vector4>, b: Readonly<Vector4>, tolerance = 0.001): boolean {
-        return isNearlyEqual(a.x, b.x, tolerance)
-            && isNearlyEqual(a.y, b.y, tolerance)
-            && isNearlyEqual(a.z, b.z, tolerance)
-            && isNearlyEqual(a.w, b.w, tolerance);
+    equals(a: Readonly<Vector4>, b: Readonly<Vector4>, tolerance: number = 0.0001): boolean {
+        return isNearlyEqual(a.x, b.x, tolerance) && isNearlyEqual(a.y, b.y, tolerance) && isNearlyEqual(a.z, b.z, tolerance) && isNearlyEqual(a.w, b.w, tolerance);
     },
+
+    // ------------------------------------- Valid -------------------------------------
 
     /**
-     * Checks that all components of the vector are not NAN and are finite
-     * @param value
+     * Checks that all components of `q` are not NAN and are finite.
+     * @param q
      */
-    isValid(value: Readonly<Vector4>): boolean {
-        return !isNaN(value.x) && !isNaN(value.y) && !isNaN(value.z) && !isNaN(value.w) && isFinite(value.x) && isFinite(value.y) && isFinite(value.z) && isFinite(value.w);
+    isValid(q: Readonly<Vector4>): boolean {
+        return !isNaN(q.x) && !isNaN(q.y) && !isNaN(q.z) && !isNaN(q.w) && isFinite(q.x) && isFinite(q.y) && isFinite(q.z) && isFinite(q.w);
     },
-
-
-    // ------------------------------------------------------------------------------
-
-    /**
-     * Linear interpolation between vectors a and b by alpha
-     * @param a starting vector
-     * @param b ending vector
-     * @param alpha interpolation value (between 0, 1)
-     * @param out Result of the interpolation (If not provided a new instance is created)
-     */
-    lerp(a: Readonly<Vector4>, b: Readonly<Vector4>, alpha: number, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
-        out.x = lerp(a.x, b.x, alpha);
-        out.y = lerp(a.y, b.y, alpha);
-        out.z = lerp(a.z, b.z, alpha);
-        out.w = lerp(a.w, b.w, alpha);
-        return out;
-    },
-
-    /**
-     * Transform the vector v by the transformation matrix
-     * @param v Vector4 to be transformed
-     * @param m Transformation matrix
-     * @param out Result of v transformed by m (If not provided a new instance is created)
-     */
-    transform(v: Readonly<Vector4>, m: Readonly<Matrix4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}): Vector4 {
-        const a = gl_vec4.transformMat4(gl_vec4.create(), this.toArray(v), m);
-        out.x = a[0];
-        out.y = a[1];
-        out.z = a[2];
-        out.w = a[3];
-        return out;
-    },
-};
+} as const;

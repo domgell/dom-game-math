@@ -1,95 +1,179 @@
-import {vec2 as gl_vec2, vec3 as gl_vec3, vec4 as gl_vec4, mat4 as gl_mat4, quat as gl_quat} from "gl-matrix";
-import {isNearlyEqual, lerp, toRad} from "./common.ts";
+import {TypedArrayNonBigInt} from "@domgell/ts-util";
+import {vec2} from "./Vector2.ts";
+import {Vector2} from "./Vector2.ts";
+import {lerp, isNearlyEqual} from "./common.ts";
 import {Matrix4} from "./Matrix4.ts";
-import {Quaternion} from "./Quaternion.ts";
-import {ConstRefVector, RefVector} from "./RefVector.ts";
+import {vec4 as gl_vec4} from "gl-matrix";
+import {vec3 as gl_vec3} from "gl-matrix";
+import {Quaternion, quat} from "./Quaternion.ts";
 
-export type Vector3 = { x: number, y: number, z: number };
+
+export type Vector3 = { x: number, y: number, z: number }
 
 export const vec3 = {
 
-    // --------------------------------- Constants ---------------------------------
+    // ----------------------------------- Constants -----------------------------------
 
     /**
      * Zero vector (0, 0, 0)
      */
-    zero: Object.freeze({x: 0, y: 0, z: 0}) as Readonly<Vector3>,
+    zero: Object.freeze({x: 0, y: 0, z: 0}),
     /**
      * One vector (1, 1, 1)
      */
-    one: Object.freeze({x: 1, y: 1, z: 1}) as Readonly<Vector3>,
+    one: Object.freeze({x: 1, y: 1, z: 1}),
     /**
      * Right vector (1, 0, 0)
      */
-    right: Object.freeze({x: 1, y: 0, z: 0}) as Readonly<Vector3>,
+    right: Object.freeze({x: 1, y: 0, z: 0}),
     /**
-     * Left vector (-1, 0, 0)
+     * Up vector (1, 1, 0)
      */
-    up: Object.freeze({x: 0, y: 1, z: 0}) as Readonly<Vector3>,
+    up: Object.freeze({x: 0, y: 1, z: 0}),
     /**
-     * Up vector (0, 1, 0)
+     * Forward vector (0, 0, 1)
      */
-    forward: Object.freeze({x: 0, y: 0, z: 1}) as Readonly<Vector3>,
+    forward: Object.freeze({x: 0, y: 0, z: 1}),
 
-
-    // -----------------------------------------------------------------------------
+    // --------------------------------- Constructors ----------------------------------
 
     /**
-     * Create a new Vector3 from x, y, z.
-     * - If x, y, z are not provided, the vector will be (0, 0, 0)
-     * - If y, z are not provided, the vector will be (x, x, x)
-     * @param x
-     * @param y
-     * @param z
+     * Create a new vector instance
      */
-    new(x?: number, y?: number, z?: number): Vector3 {
-        if (x === undefined && y === undefined && z === undefined)
+    new: ((...args: any) => {
+        const a = args[0];
+        const b = args[1];
+        const c = args[2];
+
+        if (typeof a === "number" && typeof b === "number" && typeof c === "number") {
+            return {x: a, y: b, z: c};
+        }
+
+        if (typeof a === "number" && b === undefined && c === undefined) {
+            return {x: a, y: a, z: a};
+        }
+
+        if (a === undefined && b === undefined && c === undefined) {
             return {x: 0, y: 0, z: 0};
+        }
 
-        if (x !== undefined && y === undefined && z === undefined)
-            return {x, y: x, z: x};
+        if ("x" in a && "y" in a && typeof b === "number" && c === undefined) {
+            return {x: a.x, y: a.y, z: b};
+        }
 
-        if (x !== undefined && y !== undefined && z === undefined)
-            return {x, y, z: y};
+        if (typeof a === "number" && "x" in b && "y" in b && c === undefined) {
+            // noinspection JSSuspiciousNameCombination
+            return {x: a, y: b.x, z: b.y};
+        }
 
-        // @ts-ignore
-        return {x, y, z};
+        throw new Error("Invalid arguments to create Vector3");
+    }) as {
+        /**
+         * Create a new vector from `x`, `y`, `z` components
+         * @param x
+         * @param y
+         * @param z
+         */
+        (x: number, y: number, z: number): Vector3,
+        /**
+         * Create a new vector as {x: f, y: f, z: f}
+         * @param f
+         */
+        (f: number): Vector3,
+        /**
+         * Create a new vector as {x: 0, y: 0, z: 0}
+         */
+        (): Vector3,
+        /**
+         * Create a new vector as {x: v.x, y: v.y, z: z}
+         * @param v
+         * @param z
+         */
+        (v: Vector2, z: number): Vector3,
+        /**
+         * Create a new vector as {x: x, y: v.x, z: v.y}
+         * @param x
+         * @param v
+         */
+        (x: number, v: Vector2): Vector3,
     },
 
     /**
-     * Create a new readonly (with Object.freeze()) Vector3 from x, y, z values.
-     * - If x, y, z are not provided, the vector will be (0, 0, 0)
-     * - If y, z are not provided, the vector will be (x, x, x)
-     * @param x
-     * @param y
-     * @param z
+     * Create a new readonly vector instance
      */
-    const(x?: number, y?: number, z?: number) {
-        return Object.freeze(this.new(x, y, z)) as Readonly<Vector3>;
+    const: ((...args: any) => {
+        return vec3.new(args);
+    }) as {
+        /**
+         * Create a new readonly vector from `x`, `y`, `z` components
+         */
+        (x: number, y: number, z: number): Readonly<Vector3>,
+        /**
+         * Create a new readonly vector as {x: f, y: f, z: f}
+         * @param f
+         */
+        (f: number): Readonly<Vector3>,
+        /**
+         * Create a new readonly vector as {x: 0, y: 0, z: 0}
+         */
+        (): Readonly<Vector3>,
+        /**
+         * Create a new readonly vector as {x: v.x, y: v.y, z: z}
+         * @param v
+         * @param z
+         */
+        (v: Vector3, z: number): Readonly<Vector3>,
+        /**
+         * Create a new readonly vector as {x: x, y: v.x, z: v.y}
+         * @param x
+         * @param v
+         */
+        (x: number, v: Vector3): Readonly<Vector3>,
     },
 
-    /**
-     * Creates a new Vector3 with the same x, y, z values as v.
-     * @param v
-     */
-    copy(v: Readonly<Vector3>): Vector3 {
-        return this.new(v.x, v.y, v.z);
-    },
+    // ------------------------------- Copy, Set, Clear --------------------------------
 
     /**
-     * Set the x, y, z values of v to the x, y, z values of other.
-     * @param v
+     * Create a new readonly vector from `other`.
      * @param other
      */
-    set(v: Vector3, other: Readonly<Vector3>): Vector3 {
-        v.x = other.x;
-        v.y = other.y;
-        v.z = other.z;
-        return v;
+    copy(other: Readonly<Vector3>): Vector3 {
+        return {x: other.x, y: other.y, z: other.z};
     },
 
     /**
-     * Set the x, y, z values of v to zero to 0.
+     * Set the components of `v` and return `v`
+     */
+    set: ((v: Vector3, ...args: any) => {
+        const a = args[0];
+        const b = args[1];
+        const c = args[2];
+
+        if (typeof a === "number") {
+            v.x = a;
+            v.y = b;
+            v.z = c;
+        } else {
+            v.x = a.x;
+            v.y = a.y;
+            v.z = a.z;
+        }
+
+        return v;
+    }) as {
+        /**
+         * Set components of `v` to `other` and return `v`.
+         */
+        (v: Vector3, other: Readonly<Vector3>): Vector3,
+        /**
+         * Set components of `v` to `x`, `y`, `z` and return `v`.
+         */
+        (v: Vector3, x: number, y: number, z: number): Vector3,
+    },
+
+    /**
+     * Set components of `v` to 0 and return `v`.
+     * @param v
      */
     clear(v: Vector3): Vector3 {
         v.x = 0;
@@ -98,129 +182,162 @@ export const vec3 = {
         return v;
     },
 
-
-    // ----------------------------------- Array -----------------------------------
+    // ------------------------------------- Array -------------------------------------
 
     /**
-     * Create a new Vector3 from the values of an array at an offset.
-     * @param arr
-     * @param offset
+     * Create a new vector from `array` with `{x: array[offset], y: array[offset + 1], z: array[offset + 2]}`
+     * @param array
+     * @param offset Defaults to 0
      */
-    fromArray(arr: number[] | Float32Array, offset: number = 0): Vector3 {
-        return this.new(arr[offset], arr[offset + 1], arr[offset + 2]);
+    fromArray(array: ArrayLike<number>, offset: number = 0): Vector3 {
+        return {x: array[offset], y: array[offset + 1], z: array[offset + 2]};
     },
-
     /**
-     * Put the x, y, z values of v into an array at an offset.
+     * Put the components of `v` into `array` at an offset
      * @param v
-     * @param out
-     * @param offset
+     * @param array
+     * @param offset Defaults to 0
      */
-    intoArray(v: Readonly<Vector3>, out: number[] | Float32Array, offset: number = 0) {
-        out[offset] = v.x;
-        out[offset + 1] = v.y;
-        out[offset + 2] = v.z;
+    intoArray(v: Readonly<Vector3>, array: number[] | TypedArrayNonBigInt, offset: number = 0): void {
+        array[offset] = v.x;
+        array[offset + 1] = v.y;
+        array[offset + 2] = v.z;
     },
-
     /**
-     * Returns a new array with the x, y, z values of v.
+     * Create a new array from `v`
      * @param v
      */
     toArray(v: Readonly<Vector3>): [number, number, number] {
         return [v.x, v.y, v.z];
     },
 
-    /**
-     * Provides getters and setters to access an array at an offset as a vector with x, y, z components
-     * @param arr
-     * @param offset
-     */
-    ref(arr: number[] | Float32Array, offset: number = 0): Vector3 {
-        return new RefVector(arr, offset) as Vector3;
-    },
+    // ------------------------------------ Length -------------------------------------
 
     /**
-     * Provides getters to access an array at an offset as a vector with x, y, z components
-     * @param arr
-     * @param offset
+     * Returns the length of `v` (`sqrt(dot(v, v)`)
+     * @param v
      */
-    refConst(arr: number[] | Float32Array, offset: number = 0): Readonly<Vector3> {
-        return new ConstRefVector(arr, offset) as Readonly<Vector3>;
-    },
-
-    // -----------------------------------------------------------------------------
-
     len(v: Readonly<Vector3>): number {
         return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
     },
 
+    /**
+     * Returns the squared length of `v` (`dot(v, v)`)
+     * @param v
+     */
     lenSquared(v: Readonly<Vector3>): number {
         return v.x * v.x + v.y * v.y + v.z * v.z;
     },
 
+    /**
+     * Returns the distance between `a` and `b` (`sqrt(dot(a - b, a - b)`)
+     * @param a
+     * @param b
+     */
     distance(a: Readonly<Vector3>, b: Readonly<Vector3>): number {
-        return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2);
+        return Math.sqrt(vec3.distanceSquared(a, b));
     },
 
+    /**
+     * Returns the squared distance between `a` and `b` (`dot(a - b, a - b)`)
+     * @param a
+     * @param b
+     */
     distanceSquared(a: Readonly<Vector3>, b: Readonly<Vector3>): number {
-        return (b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dz = a.z - b.z;
+        return dx * dx + dy * dy + dz * dz;
+    },
+
+    // ---------------------------------- Dot, Cross -----------------------------------
+
+    /**
+     * Returns the dot product of `a` and `b`
+     * @param a
+     * @param b
+     */
+    dot(a: Readonly<Vector3>, b: Readonly<Vector3>): number {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
     },
 
     /**
-     * Normalize the vector v
-     * @param v
-     * @param out Result of v normalized (If not provided a new instance is created)
+     * Cross product of `a` and `b`.
+     * @param a
+     * @param b
+     * @param out Defaults to a new vector
      */
-    normalize(v: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const len = this.len(v);
-
-        if (len === 0)
-            return this.set(out, v);
-
-        const invLen = 1.0 / len;
-        out.x = v.x * invLen;
-        out.y = v.y * invLen;
-        out.z = v.z * invLen;
-
+    cross(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
+        out.x = a.y * b.z - a.z * b.y;
+        out.y = a.z * b.x - a.x * b.z;
+        out.z = a.x * b.y - a.y * b.x;
         return out;
     },
 
-
-    // -------------------------------- Arithmetic --------------------------------
+    // ---------------------------------- Arithmetic -----------------------------------
 
     /**
-     * Add the vectors a and b
-     * @param a First operand
-     * @param b Second operand
-     * @param out Result of a + b (If not provided a new instance is created)
+     * Add `a` and `b` and put the result into `out`
      */
-    add(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        out.x = a.x + b.x;
-        out.y = a.y + b.y;
-        out.z = a.z + b.z;
+    add: ((a: Readonly<Vector3>, b: Readonly<Vector3> | number, out = {x: 0, y: 0, z: 0}) => {
+        if (typeof b === "number") {
+            out.x = a.x + b;
+            out.y = a.y + b;
+            out.z = a.z + b;
+        } else {
+            out.x = a.x + b.x;
+            out.y = a.y + b.y;
+            out.z = a.z + b.z;
+        }
+
         return out;
+    }) as {
+        /**
+         * Add `a` and `b` put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: Readonly<Vector3>, out?: Vector3): Vector3,
+        /**
+         * Add the scalar `b` to each component of `a`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: number, out?: Vector3): Vector3,
     },
 
-    /**
-     * Subtract the vector b from a
-     * @param a First operand
-     * @param b Second operand
-     * @param out Result of a - b (If not provided a new instance is created)
-     */
-    sub(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        out.x = a.x - b.x;
-        out.y = a.y - b.y;
-        out.z = a.z - b.z;
+    sub: ((a: Readonly<Vector3>, b: Readonly<Vector3> | number, out = {x: 0, y: 0, z: 0}) => {
+        if (typeof b === "number") {
+            out.x = a.x - b;
+            out.y = a.y - b;
+            out.z = a.z - b;
+        } else {
+            out.x = a.x - b.x;
+            out.y = a.y - b.y;
+            out.z = a.z - b.z;
+        }
+
         return out;
+    }) as {
+        /**
+         * Subtract `b` from `a`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: Readonly<Vector3>, out?: Vector3): Vector3,
+        /**
+         * Subtract the scalar `b` from each component of `a`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: number, out?: Vector3): Vector3,
     },
 
-    /**
-     * Multiply the vector a by the vector or scalar b
-     * @param a First operand
-     * @param b Second operand (Vector3 or scalar)
-     * @param out Result of a * b (If not provided a new instance is created)
-     */
-    mul(a: Readonly<Vector3>, b: Readonly<Vector3> | number, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
+    mul: ((a: Readonly<Vector3>, b: Readonly<Vector3> | number, out = {x: 0, y: 0, z: 0}) => {
         if (typeof b === "number") {
             out.x = a.x * b;
             out.y = a.y * b;
@@ -230,16 +347,26 @@ export const vec3 = {
             out.y = a.y * b.y;
             out.z = a.z * b.z;
         }
+
         return out;
+    }) as {
+        /**
+         * Multiply `a` and `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: Readonly<Vector3>, out?: Vector3): Vector3,
+        /**
+         * Multiply each component of `a` by the scalar `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: number, out?: Vector3): Vector3,
     },
 
-    /**
-     * Divide the vector a by the vector or scalar b
-     * @param a First operand
-     * @param b Second operand (Vector3 or scalar)
-     * @param out Result of a / b (If not provided a new instance is created)
-     */
-    div(a: Readonly<Vector3>, b: Readonly<Vector3> | number, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
+    div: ((a: Readonly<Vector3>, b: Readonly<Vector3> | number, out = {x: 0, y: 0, z: 0}) => {
         if (typeof b === "number") {
             out.x = a.x / b;
             out.y = a.y / b;
@@ -249,13 +376,29 @@ export const vec3 = {
             out.y = a.y / b.y;
             out.z = a.z / b.z;
         }
+
         return out;
+    }) as {
+        /**
+         * Divide `a` by `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: Readonly<Vector3>, out?: Vector3): Vector3,
+        /**
+         * Divide each component of `a` by the scalar `b`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: number, out?: Vector3): Vector3,
     },
 
     /**
-     * Negated vector v (-x, -y, -z)
-     * @param v Vector to negate
-     * @param out Result of -v (If not provided a new instance is created)
+     * Negate the components of `v` and put the result in `out` and return `out`.
+     * @param v
+     * @param out
      */
     negate(v: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
         out.x = -v.x;
@@ -264,55 +407,13 @@ export const vec3 = {
         return out;
     },
 
-
-    // ----------------------------------------------------------------------------
-
-    dot(a: Readonly<Vector3>, b: Readonly<Vector3>): number {
-        return a.x * b.x + a.y * b.y + a.z * b.z;
-    },
+    // --------------------------------- Max, Min, Abs ---------------------------------
 
     /**
-     * Cross product of the vectors a and b
-     * @param a First operand
-     * @param b Second operand
-     * @param out Result of a cross b (If not provided a new instance is created)
-     */
-    cross(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        out.x = a.y * b.z - a.z * b.y;
-        out.y = a.z * b.x - a.x * b.z;
-        out.z = a.x * b.y - a.y * b.x;
-        return out;
-    },
-
-    /**
-     * Angle between the vectors a and b in degrees
+     * Component-wise `Math.max(a, b)`, put the result into `out` and return `out`.
      * @param a
      * @param b
-     */
-    angle(a: Readonly<Vector3>, b: Readonly<Vector3>): number {
-        return (Math.acos(this.dot(a, b) / (this.len(a) * this.len(b)))) * toRad;
-    },
-
-    /**
-     * Projection of vector a onto vector b
-     * @param a Vector to project
-     * @param b Vector to project onto
-     * @param out Result of a projected onto b (If not provided a new instance is created)
-     */
-    project(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const dot = this.dot(a, b);
-        const len = this.lenSquared(b);
-        return this.mul(b, dot / len, out);
-    },
-
-
-    // -----------------------------------------------------------------------------
-
-    /**
-     * Max vector between a and b
-     * @param a
-     * @param b
-     * @param out Result of max(a, b) (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     max(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
         out.x = Math.max(a.x, b.x);
@@ -322,10 +423,10 @@ export const vec3 = {
     },
 
     /**
-     * Min vector between a and b
+     * Component-wise `Math.min(a, b)`, put the result into `out` and return `out`.
      * @param a
      * @param b
-     * @param out Result of min(a, b) (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     min(a: Readonly<Vector3>, b: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
         out.x = Math.min(a.x, b.x);
@@ -335,27 +436,9 @@ export const vec3 = {
     },
 
     /**
-     * Clamp vector v components between min and max
+     * Component-wise `Math.abs(v)`, put the result into `out` and return `out`.
      * @param v
-     * @param min
-     * @param max
-     * @param out Result of clamp(v, min, max) (If not provided a new instance is created)
-     */
-    clamp(v: Readonly<Vector3>, min: Readonly<Vector3>, max: Readonly<Vector3>, out: Vector3 = {
-        x: 0,
-        y: 0,
-        z: 0,
-    }): Vector3 {
-        out.x = Math.min(Math.max(v.x, min.x), max.x);
-        out.y = Math.min(Math.max(v.y, min.y), max.y);
-        out.z = Math.min(Math.max(v.z, min.z), max.z);
-        return out;
-    },
-
-    /**
-     * Absolute value of vector v
-     * @param v
-     * @param out Result of abs(v) (If not provided a new instance is created)
+     * @param out Defaults to a new vector
      */
     abs(v: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
         out.x = Math.abs(v.x);
@@ -364,113 +447,112 @@ export const vec3 = {
         return out;
     },
 
+    // ----------------------------------- Normalize -----------------------------------
+
     /**
-     * Component-wise equality between vectors a and b at the given tolerance
+     * Normalize `v` and put the result in `out` and return `out`.
+     * @param v
+     * @param out
+     */
+    normalize(v: Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
+        const len = vec3.len(v);
+        if (len === 0) {
+            out.x = 0;
+            out.y = 0;
+            out.z = 0;
+        } else {
+            const invLen = 1 / len;
+            out.x = v.x * invLen;
+            out.y = v.y * invLen;
+            out.z = v.z * invLen;
+        }
+        return out;
+    },
+
+    // ------------------------------------ Equals -------------------------------------
+
+    /**
+     * Component-wise check if `a` and `b` are equal within `tolerance`
      * @param a
      * @param b
-     * @param tolerance
+     * @param tolerance Defaults to 0.0001
      */
-    equals(a: Readonly<Vector3>, b: Readonly<Vector3>, tolerance = 0.001): boolean {
-        return isNearlyEqual(a.x, b.x, tolerance)
-            && isNearlyEqual(a.y, b.y, tolerance)
-            && isNearlyEqual(a.z, b.z, tolerance);
+    equals(a: Readonly<Vector3>, b: Readonly<Vector3>, tolerance: number = 0.0001): boolean {
+        return isNearlyEqual(a.x, b.x, tolerance) && isNearlyEqual(a.y, b.y, tolerance) && isNearlyEqual(a.z, b.z, tolerance);
     },
 
+    // ------------------------------------- Valid -------------------------------------
+
     /**
-     * Checks that all components of the vector are not NAN and are finite
-     * @param value
+     * Checks that all components of `v` are not NAN and are finite.
+     * @param v
      */
-    isValid(value: Readonly<Vector3>): boolean {
-        return !isNaN(value.x) && !isNaN(value.y) && !isNaN(value.z) && isFinite(value.x) && isFinite(value.y) && isFinite(value.z);
+    isValid(v: Readonly<Vector3>): boolean {
+        return !isNaN(v.x) && !isNaN(v.y) && !isNaN(v.z) && isFinite(v.x) && isFinite(v.y) && isFinite(v.z);
     },
 
+    // ------------------------------------- Lerp --------------------------------------
 
-    // -----------------------------------------------------------------------------
+    lerp: ((a: Readonly<Vector3>, b: Readonly<Vector3>, alpha: number | Readonly<Vector3>, out: Vector3 = {x: 0, y: 0, z: 0}) => {
+        if (typeof alpha === "number") {
+            out.x = lerp(a.x, b.x, alpha);
+            out.y = lerp(a.y, b.y, alpha);
+            out.z = lerp(a.z, b.z, alpha);
+        } else {
+            out.x = lerp(a.x, alpha.x, alpha.y);
+            out.y = lerp(a.y, alpha.y, alpha.y);
+            out.z = lerp(a.z, alpha.z, alpha.z);
+        }
 
-    /**
-     * Transform the vector v by the rotation quaternion
-     * @param v Vector3 to be rotated
-     * @param rotation Quaternion to rotate the vector by
-     * @param out Result of v rotated by rotation (If not provided a new instance is created)
-     */
-    rotate(v: Readonly<Vector3>, rotation: Readonly<Quaternion>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const a = gl_vec3.transformQuat(gl_vec3.create(), this.toArray(v), [rotation.x, rotation.y, rotation.z, rotation.w]);
-        out.x = a[0];
-        out.y = a[1];
-        out.z = a[2];
         return out;
+    }) as {
+        /**
+         * Linearly interpolates between `a` and `b` based on the components of `alpha`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param alpha
+         * @param out
+         */
+        (a: Readonly<Vector3>, b: Readonly<Vector3>, alpha: number, out?: Vector3): Vector3,
+        /**
+         * Linearly interpolates between `a` and `b` based on `alpha`, put the result into `out` and return `out`.
+         * @param a
+         * @param b
+         * @param alpha
+         * @param out Defaults to a new vector
+         */
+        (a: Readonly<Vector3>, b: Readonly<Vector3>, alpha: number, out?: Vector3): Vector3,
     },
 
+    // ----------------------------------- Transform -----------------------------------
+
     /**
-     * Transform the vector v by the transformation matrix
-     * @param v Vector3 to be transformed
-     * @param m Transformation matrix
-     * @param out Result of v transformed by m (If not provided a new instance is created)
+     * Transform `v` by `m`, put the result into `out` and return `out`.
+     * @param v
+     * @param m
+     * @param out Defaults to a new vector
      */
     transform(v: Readonly<Vector3>, m: Readonly<Matrix4>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const v2 = gl_vec3.transformMat4(gl_vec3.create(), this.toArray(v), m);
-        out.x = v2[0];
-        out.y = v2[1];
-        out.z = v2[2];
+        // TEMP
+        const t = gl_vec3.transformMat4(gl_vec3.create(), this.toArray(v), m);
+        out.x = t[0];
+        out.y = t[1];
+        out.z = t[2];
         return out;
     },
 
     /**
-     * Linear interpolation between vectors a and b by alpha
-     * @param a starting vector
-     * @param b ending vector
-     * @param alpha interpolation value (between 0, 1)
-     * @param out Result of the interpolation (If not provided a new instance is created)
-     */
-    lerp(a: Readonly<Vector3>, b: Readonly<Vector3>, alpha: number, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        out.x = lerp(a.x, b.x, alpha);
-        out.y = lerp(a.y, b.y, alpha);
-        out.z = lerp(a.z, b.z, alpha);
-        return out;
-    },
-
-    /**
-     * Rotate this vector on the Y axis (yaw rotation)
+     * Rotate `v` by `q`, put the result into `out` and return `out`.
      * @param v
-     * @param degrees
-     * @param out Result of the rotation (If not provided a new instance is created)
+     * @param q
+     * @param out Defaults to a new vector
      */
-    rotateY(v: Readonly<Vector3>, degrees: number, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const cos = Math.cos(degrees * toRad);
-        const sin = Math.sin(degrees * toRad);
-        out.x = v.x * cos - v.z * sin;
-        out.y = v.y;
-        out.z = v.x * sin + v.z * cos;
-        return out;
-    },
-
-    /**
-     * Rotate this vector on the X axis (pitch rotation)
-     * @param v
-     * @param degrees
-     * @param out Result of the rotation (If not provided a new instance is created)
-     */
-    rotateX(v: Readonly<Vector3>, degrees: number, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const cos = Math.cos(degrees * toRad);
-        const sin = Math.sin(degrees * toRad);
-        out.x = v.x;
-        out.y = v.y * cos - v.z * sin;
-        out.z = v.y * sin + v.z * cos;
-        return out;
-    },
-
-    /**
-     * Rotate this vector on the Z axis (roll rotation)
-     * @param v
-     * @param degrees
-     * @param out Result of the rotation (If not provided a new instance is created)
-     */
-    rotateZ(v: Readonly<Vector3>, degrees: number, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
-        const cos = Math.cos(degrees * toRad);
-        const sin = Math.sin(degrees * toRad);
-        out.x = v.x * cos - v.y * sin;
-        out.y = v.x * sin + v.y * cos;
-        out.z = v.z;
+    rotate(v: Readonly<Vector3>, q: Readonly<Quaternion>, out: Vector3 = {x: 0, y: 0, z: 0}): Vector3 {
+        // TEMP
+        const t = gl_vec3.transformQuat(gl_vec3.create(), this.toArray(v), quat.toArray(q));
+        out.x = t[0];
+        out.y = t[1];
+        out.z = t[2];
         return out;
     },
 };

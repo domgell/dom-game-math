@@ -1,12 +1,25 @@
 import {mat2d as gl_mat2x3} from "gl-matrix";
-import {Vector2, vec2} from "./Vector2";
+import {Vector2, vec2} from "./Vector2.ts";
 import {isNearlyEqual, lerp, toDeg, toRad} from "./common.ts";
 import {TransformOrder, mat4, Matrix4} from "./Matrix4.ts";
 import {quat} from "./Quaternion.ts";
+import {DeepReadonly} from "@domgell/ts-util";
 
-export type Matrix2x3 = gl_mat2x3
+// ------------------------------------ Transform2d ------------------------------------
 
 export type Transform2D = { translation: Vector2, rotation: number, scale: Vector2, order: TransformOrder }
+
+export function Transform2D(t: DeepReadonly<Partial<Transform2D>>, out: Partial<Transform2D> = {}): Transform2D {
+    vec2.set(out.translation ??= vec2.new(), t.translation ?? vec2.zero);
+    out.rotation = t.rotation ?? 0;
+    vec2.set(out.scale ??= vec2.new(1), t.scale ?? vec2.one);
+    out.order = t.order ?? "TRS";
+    return out as Transform2D;
+}
+
+// ------------------------------------- Matrix2x3 -------------------------------------
+
+export type Matrix2x3 = gl_mat2x3
 
 export const mat2x3 = {
 
@@ -14,7 +27,6 @@ export const mat2x3 = {
 
     idt: gl_mat2x3.create() as Matrix2x3,
     zero: new Float32Array(6) as Readonly<Matrix2x3>,
-
 
     // ---------------------------------- Creation ---------------------------------
 
