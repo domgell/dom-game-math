@@ -21,6 +21,21 @@ export const vec4 = {
      */
     one: Object.freeze({x: 1, y: 1, z: 1, w: 1}),
 
+    /**
+     * Red vector (1, 0, 0, 1)
+     */
+    red: Object.freeze({x: 1, y: 0, z: 0, w: 1}),
+    
+    /**
+     * Green vector (0, 1, 0, 1)
+     */
+    green: Object.freeze({x: 0, y: 1, z: 0, w: 1}),
+    
+    /**
+     * Blue vector (0, 0, 1, 1)
+     */
+    blue: Object.freeze({x: 0, y: 0, z: 1, w: 1}),
+
     // --------------------------------- Constructors ----------------------------------
 
     /**

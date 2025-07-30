@@ -483,7 +483,7 @@ export const vec2 = {
      * @param a
      * @param b
      */
-    angle(a: Readonly<Vector2>, b: Readonly<Vector2>): number {
+    angleBetween(a: Readonly<Vector2>, b: Readonly<Vector2>): number {
         const lenA = vec2.len(a);
         const lenB = vec2.len(b);
         if (lenA === 0 || lenB === 0) {
@@ -493,4 +493,13 @@ export const vec2 = {
         const angle = Math.acos(dot / (lenA * lenB));
         return angle * toDeg;
     },
+
+    /**
+     * Vector `v` as an angle in degrees
+     * @param v
+     */
+    angle(v: Readonly<Vector2>): number {
+        const angle = Math.atan2(v.y, v.x);
+        return angle * toDeg;
+    }
 };
