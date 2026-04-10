@@ -89,6 +89,22 @@ export function clamp(value: number, min: number, max: number) {
  * @param alpha
  */
 export function smoothStep(a: number, b: number, alpha: number) {
-    alpha = clamp((alpha - a) / (b - a), 0, 1)
-    return alpha * alpha * (3 - 2 * alpha)
+    alpha = clamp((alpha - a) / (b - a), 0, 1);
+    return alpha * alpha * (3 - 2 * alpha);
+}
+
+/**
+ * True modulo where negative values are treated correctly
+ */
+export function modulo(n: number, m: number): number {
+    return ((n % m) + m) % m;
+}
+
+/**
+ * Framerate independent linear interpolate using `Math.exp()`
+ */
+export function frameLerp(a: number, b: number, alpha: number) {
+    if (alpha <= 0) return a;
+    if (alpha >= 1) return b;
+    return a + (b - a) * (1 - Math.exp(-alpha));
 }

@@ -4,6 +4,7 @@ import {vec3, Vector3} from "./Vector3.ts";
 import {isNearlyEqual, toRad} from "./common.ts";
 import {DeepReadonly} from "@domgell/ts-util";
 import {vec2, Vector2} from "./Vector2.ts";
+import {Transform2D} from "./Matrix2x3.ts";
 
 // ------------------------------------ Transform3d ------------------------------------
 
@@ -461,6 +462,23 @@ export const mat4 = {
                 this.rotate(out, transform.rotation, out);
                 return out;
         }
+    },
+
+    /**
+     * Create a 2d transform from translation, rotation and scale, put the result in `out` and return `out`. 
+     * @param transform
+     * @param out
+     */
+    compose2d(transform: Partial<Transform2D>, out: Matrix4 = gl_mat4.create()): Matrix4 {
+        transform.translation ??= vec2.new();
+        transform.scale ??= vec2.new(1);
+        transform.rotation ??= 0;
+        
+        return this.compose({
+            translation: vec3.new(transform.translation, 0),
+            scale: vec3.new(transform.scale, 1),
+            rotation: quat.fromEuler({roll: transform.rotation}),
+        }, out);
     },
 
     /**

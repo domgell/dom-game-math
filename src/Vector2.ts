@@ -1,6 +1,7 @@
 import {TypedArrayNonBigInt} from "@domgell/ts-util";
-import {lerp, isNearlyEqual} from "./common";
+import {lerp, isNearlyEqual, toRad, toDeg} from "./common";
 import {vec2 as gl_vec2} from "gl-matrix";
+import {Matrix4} from "./Matrix4.ts";
 
 export type Vector2 = { x: number, y: number }
 
@@ -414,7 +415,10 @@ export const vec2 = {
 
     // ------------------------------------- Lerp --------------------------------------
 
-    lerp: ((a: Readonly<Vector2>, b: Readonly<Vector2>, alpha: number | Readonly<Vector2>, out: Vector2 = {x: 0, y: 0}): Vector2 => {
+    lerp: ((a: Readonly<Vector2>, b: Readonly<Vector2>, alpha: number | Readonly<Vector2>, out: Vector2 = {
+        x: 0,
+        y: 0,
+    }): Vector2 => {
         if (typeof alpha === "number") {
             out.x = lerp(a.x, b.x, alpha);
             out.y = lerp(a.y, b.y, alpha);
@@ -451,11 +455,42 @@ export const vec2 = {
      * @param m
      * @param out
      */
-    transform(v: Readonly<Vector2>, m: Float32Array, out: Vector2 = {x: 0, y: 0}): Vector2 {
+    transform(v: Readonly<Vector2>, m: Matrix4, out: Vector2 = {x: 0, y: 0}): Vector2 {
         // TEMP
         const t = gl_vec2.transformMat4(gl_vec2.create(), this.toArray(v), m);
         out.x = t[0];
         out.y = t[1];
         return out;
+    },
+
+    // ------------------------------------ Rotate -------------------------------------
+
+    /**
+     * Rotate `v` by `degrees`, put the result into `out` and return `out`.
+     */
+    rotate(v: Readonly<Vector2>, degrees: number, out: Vector2 = {x: 0, y: 0}): Vector2 {
+        const cos = Math.cos(degrees * toRad);
+        const sin = Math.sin(degrees * toRad);
+        const vx = v.x * cos - v.y * sin;
+        const vy = v.x * sin + v.y * cos;
+        out.x = vx;
+        out.y = vy;
+        return out;
+    },
+
+    /**
+     * The angle in degrees between `a` and `b`.
+     * @param a
+     * @param b
+     */
+    angle(a: Readonly<Vector2>, b: Readonly<Vector2>): number {
+        const lenA = vec2.len(a);
+        const lenB = vec2.len(b);
+        if (lenA === 0 || lenB === 0) {
+            return 0;
+        }
+        const dot = vec2.dot(a, b);
+        const angle = Math.acos(dot / (lenA * lenB));
+        return angle * toDeg;
     },
 };
