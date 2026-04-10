@@ -3,7 +3,10 @@ import {lerp, isNearlyEqual, toRad, toDeg} from "./common";
 import {vec2 as gl_vec2} from "gl-matrix";
 import {Matrix4} from "./Matrix4.ts";
 
-export type Vector2 = { x: number, y: number }
+export interface Vector2 {
+    x: number,
+    y: number
+}
 
 export const vec2 = {
 

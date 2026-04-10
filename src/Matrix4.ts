@@ -8,10 +8,12 @@ import {Transform2D} from "./Matrix2x3.ts";
 
 // ------------------------------------ Transform3d ------------------------------------
 
-/**
- * A 3D transform consisting of translation, rotation, scale and transform order
- */
-export type Transform3D = { translation: Vector3, rotation: Quaternion, scale: Vector3, order: TransformOrder }
+export interface Transform3D {
+    translation: Vector3,
+    rotation: Quaternion,
+    scale: Vector3,
+    order: TransformOrder
+}
 
 /**
  * The order in which to apply translation, rotation and scale transformations
@@ -35,10 +37,7 @@ export function Transform3D(t: DeepReadonly<Partial<Transform3D>>, out: Partial<
 
 // ------------------------------------- Camera3d --------------------------------------
 
-/**
- * A 3D camera with position, rotation and projection parameters
- */
-export type Camera3D = {
+export interface Camera3D {
     position: Vector3,
     rotation: Quaternion,
     fov: number,

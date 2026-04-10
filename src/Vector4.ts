@@ -5,7 +5,12 @@ import {isNearlyEqual, lerp} from "./common.ts";
 import {Matrix4} from "./Matrix4.ts";
 import {vec4 as gl_vec4} from "gl-matrix";
 
-export type Vector4 = { x: number, y: number, z: number, w: number }
+export interface Vector4 {
+    x: number,
+    y: number,
+    z: number,
+    w: number
+}
 
 export const vec4 = {
 
@@ -130,7 +135,8 @@ export const vec4 = {
             v.y = b;
             v.z = c;
             v.w = d;
-        } else {
+        }
+        else {
             v.x = a.x;
             v.y = a.y;
             v.z = a.z;
@@ -243,7 +249,8 @@ export const vec4 = {
             out.y = 0;
             out.z = 0;
             out.w = 0;
-        } else {
+        }
+        else {
             const invLen = 1 / len;
             out.x = v.x * invLen;
             out.y = v.y * invLen;
@@ -273,7 +280,8 @@ export const vec4 = {
             out.y = a.y + b;
             out.z = a.z + b;
             out.w = a.w + b;
-        } else {
+        }
+        else {
             out.x = a.x + b.x;
             out.y = a.y + b.y;
             out.z = a.z + b.z;
@@ -304,7 +312,8 @@ export const vec4 = {
             out.y = a.y - b;
             out.z = a.z - b;
             out.w = a.w - b;
-        } else {
+        }
+        else {
             out.x = a.x - b.x;
             out.y = a.y - b.y;
             out.z = a.z - b.z;
@@ -335,7 +344,8 @@ export const vec4 = {
             out.y = a.y * b;
             out.z = a.z * b;
             out.w = a.w * b;
-        } else {
+        }
+        else {
             out.x = a.x * b.x;
             out.y = a.y * b.y;
             out.z = a.z * b.z;
@@ -366,7 +376,8 @@ export const vec4 = {
             out.y = a.y / b;
             out.z = a.z / b;
             out.w = a.w / b;
-        } else {
+        }
+        else {
             out.x = a.x / b.x;
             out.y = a.y / b.y;
             out.z = a.z / b.z;
@@ -449,13 +460,19 @@ export const vec4 = {
 
     // ------------------------------------- Lerp --------------------------------------
 
-    lerp: ((a: Readonly<Vector4>, b: Readonly<Vector4>, alpha: number | Readonly<Vector4>, out: Vector4 = {x: 0, y: 0, z: 0, w: 0}) => {
+    lerp: ((a: Readonly<Vector4>, b: Readonly<Vector4>, alpha: number | Readonly<Vector4>, out: Vector4 = {
+        x: 0,
+        y: 0,
+        z: 0,
+        w: 0,
+    }) => {
         if (typeof alpha === "number") {
             out.x = lerp(a.x, b.x, alpha);
             out.y = lerp(a.y, b.y, alpha);
             out.z = lerp(a.z, b.z, alpha);
             out.w = lerp(a.w, b.w, alpha);
-        } else {
+        }
+        else {
             out.x = lerp(a.x, alpha.x, alpha.y);
             out.y = lerp(a.y, alpha.y, alpha.y);
             out.z = lerp(a.z, alpha.z, alpha.z);

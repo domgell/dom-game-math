@@ -7,7 +7,12 @@ import {DeepReadonly} from "@domgell/ts-util";
 
 // ------------------------------------ Transform2d ------------------------------------
 
-export type Transform2D = { translation: Vector2, rotation: number, scale: Vector2, order: TransformOrder }
+export interface Transform2D {
+    translation: Vector2,
+    rotation: number,
+    scale: Vector2,
+    order: TransformOrder
+}
 
 export function Transform2D(t: DeepReadonly<Partial<Transform2D>>, out: Partial<Transform2D> = {}): Transform2D {
     vec2.set(out.translation ??= vec2.new(), t.translation ?? vec2.zero);

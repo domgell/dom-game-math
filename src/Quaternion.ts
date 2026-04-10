@@ -3,7 +3,12 @@ import {Vector3, vec3} from "./Vector3.ts";
 import {vec4} from "./Vector4.ts";
 import {isNearlyEqual, toRad} from "./common.ts";
 
-export type Quaternion = { x: number, y: number, z: number, w: number }
+export interface Quaternion {
+    x: number,
+    y: number,
+    z: number,
+    w: number
+}
 
 type EulerOrder =
     | "YawPitchRoll"
@@ -13,9 +18,17 @@ type EulerOrder =
     | "PitchRollYaw"
     | "YawRollPitch"
 
-type Euler = { yaw: number, pitch: number, roll: number, order: EulerOrder }
+interface Euler {
+    yaw: number,
+    pitch: number,
+    roll: number,
+    order: EulerOrder
+}
 
-type AxisAngle = { axis: Vector3, angle: number }
+interface AxisAngle {
+    axis: Vector3,
+    angle: number
+}
 
 export const quat = {
 
